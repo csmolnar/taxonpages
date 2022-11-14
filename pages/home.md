@@ -1,7 +1,7 @@
 ---
-title: The title
-lead: Taxa from your imagination to the web
-project: Your project
+title: What bites you?
+lead: Look up what insects live in you neighbourhood 
+project: What bites you?
 ---
    
 # {{frontmatter.title}}
