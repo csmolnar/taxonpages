@@ -7,14 +7,22 @@
         col="12"
         sm="6"
       >
-        <v-container>
-          <v-text-field
-            label="Search..."
-            placeholder="Example: Tabanidae"
-            prepend-inner-icon="mdi-magnify"
-          >
 
-          </v-text-field>
+        <v-container>
+          <v-autocomplete
+            v-model="model"
+            v-model:search="search"
+            :items="entries"
+            :loading="isLoading"
+            hide-no-data
+            hide-selected
+            item-title="name"
+            item-value="name"
+            label="Taxonomy"
+            placeholder="Start typing..."
+            prepend-icon="mdi-database-search"
+            return-object
+          ></v-autocomplete>
         </v-container>
       </v-col>
       <v-col
@@ -100,15 +108,126 @@ export default {
         south: 43.0356,
         west: -71.0333,
         east: -70.8333
-      }
+      },
+      entries: [],
+      isLoading: false,
+      model: null,
+      search: null,
     }
   },
   setup() {
-
   },
   methods: {
     updateCoordinates(e){console.log(e)},
     updateSearch(e) {console.log(e)}
+  },
+  computed: {
+      fields () {
+        if (!this.model) return []
+
+        return Object.keys(this.model).map(key => {
+          return {
+            key,
+            value: this.model[key] || 'n/a',
+          }
+        })
+      },
+      items () {
+        return this.entries.map(entry => {entry.name})
+      },
+  },
+  watch: {
+      search (searchVal) {
+        if (searchVal.length>0) {
+          // Items have already been loaded
+          console.log(searchVal)
+
+          // if (this.entries.length > 0) return
+
+          // Items have already been requested
+          if (this.isLoading) return
+
+          this.isLoading = true
+
+          // Lazily load input items
+          // fetch('https://api.publicapis.org/entries')
+          fetch('https://sfg.taxonworks.org/api/v1/otus/'+'?project_token=BS2jGvMz1w4CDxZyQ1h1Qg')
+            .then(res => res.json())
+            .then(res => {
+              const entries = res.filter( e => (typeof e.name === 'string' && e.name.toLowerCase().includes( searchVal.toLowerCase() )) )
+              console.log(entries)
+              this.entries = entries
+              // this.entries = entries.slice(0, 100)
+              // this.count = 100
+            })
+            .catch(err => {
+              console.log(err)
+            })
+            .finally(() => (this.isLoading = false))
+
+        } else {
+          this.entries = []
+        }
+        
+      },
   }
 }
 </script>
+
+<!-- export default {
+  data: () => ({
+    descriptionLimit: 60,
+    entries: [],
+    isLoading: false,
+    model: null,
+    search: null,
+  }),
+
+  computed: {
+    fields () {
+      if (!this.model) return []
+
+      return Object.keys(this.model).map(key => {
+        return {
+          key,
+          value: this.model[key] || 'n/a',
+        }
+      })
+    },
+    items () {
+      return this.entries.map(entry => {
+        const Description = entry.Description.length > this.descriptionLimit
+          ? entry.Description.slice(0, this.descriptionLimit) + '...'
+          : entry.Description
+
+        return Object.assign({}, entry, { Description })
+      })
+    },
+  },
+
+  watch: {
+    search (val) {
+      // Items have already been loaded
+      if (this.items.length > 0) return
+
+      // Items have already been requested
+      if (this.isLoading) return
+
+      this.isLoading = true
+
+      // Lazily load input items
+      fetch('https://api.publicapis.org/entries')
+        .then(res => res.json())
+        .then(res => {
+          const { entries } = res
+          this.entries = entries.slice(0, 100)
+          this.count = 100
+        })
+        .catch(err => {
+          console.log(err)
+        })
+        .finally(() => (this.isLoading = false))
+    },
+  },
+
+} -->
