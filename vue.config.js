@@ -11,11 +11,3 @@ module.exports = defineConfig({
   },
   publicPath: '/taxonpages/'
 }) 
-
-/* module.exports = {
-  configureWebpack: {
-    plugins: [
-      new Dotenv()
-    ]
-  }
-} */
