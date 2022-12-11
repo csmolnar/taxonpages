@@ -12,12 +12,12 @@
           <v-autocomplete
             v-model="model"
             v-model:search="search"
-            :items="entries"
+            :items="items"
             :loading="isLoading"
             hide-no-data
             hide-selected
-            item-title="name"
-            item-value="name"
+            item-title="label"
+            item-value="label"
             label="Taxonomy"
             placeholder="Start typing..."
             prepend-icon="mdi-database-search"
@@ -122,54 +122,66 @@ export default {
     updateSearch(e) {console.log(e)}
   },
   computed: {
-      fields () {
-        if (!this.model) return []
+    fields () {
+      if (!this.model) return []
 
-        return Object.keys(this.model).map(key => {
-          return {
-            key,
-            value: this.model[key] || 'n/a',
-          }
-        })
-      },
-      items () {
-        return this.entries.map(entry => {entry.name})
-      },
+      return Object.keys(this.model).map(key => {
+        return {
+          key,
+          value: this.model[key] || 'n/a',
+        }
+      })
+    },
+    items () {
+      return this.entries.map(entry => {
+        return {
+          ...entry,
+          label: entry.label.replace('[', '').replace(']', '')
+        }
+      })
+    },
   },
   watch: {
-      search (searchVal) {
-        if (searchVal.length>0) {
-          // Items have already been loaded
-          console.log(searchVal)
+    search (searchVal) {
+      if (searchVal.length>0) {
+        // Items have already been loaded
+        console.log(searchVal)
 
-          // if (this.entries.length > 0) return
+        // if (this.entries.length > 0) return
 
-          // Items have already been requested
-          if (this.isLoading) return
+        // Items have already been requested
+        if (this.isLoading) return
 
-          this.isLoading = true
+        this.isLoading = true
 
-          // Lazily load input items
-          // fetch('https://api.publicapis.org/entries')
-          fetch('https://sfg.taxonworks.org/api/v1/otus/'+'?project_token=BS2jGvMz1w4CDxZyQ1h1Qg')
-            .then(res => res.json())
-            .then(res => {
-              const entries = res.filter( e => (typeof e.name === 'string' && e.name.toLowerCase().includes( searchVal.toLowerCase() )) )
-              console.log(entries)
-              this.entries = entries
-              // this.entries = entries.slice(0, 100)
-              // this.count = 100
-            })
-            .catch(err => {
-              console.log(err)
-            })
-            .finally(() => (this.isLoading = false))
+        // Lazily load input items
+        // fetch('https://api.publicapis.org/entries')
+        fetch('https://sfg.taxonworks.org/api/v1/otus/autocomplete'+'?project_token=BS2jGvMz1w4CDxZyQ1h1Qg&having_taxon_name_only=true&term=' + searchVal)
+          .then(res => res.json())
+          .then(res => {
+            //console.log(res)
+            //const entries = res.filter( e => (typeof e.name === 'string' && e.name.toLowerCase().includes( searchVal.toLowerCase() )) )
+            const entries = res
+              .filter( e => (typeof e.label === 'string' && e.label.toLowerCase().includes( searchVal.toLowerCase() )) )
+              
+            this.entries = entries
 
-        } else {
-          this.entries = []
-        }
-        
-      },
+            if (entries.length==1){
+              console.log(entries[0])
+            }
+            // this.entries = entries.slice(0, 100)
+            // this.count = 100
+          })
+          .catch(err => {
+            console.log(err)
+          })
+          .finally(() => (this.isLoading = false))
+
+      } else {
+        this.entries = []
+      }
+      
+    },
   }
 }
 </script>
